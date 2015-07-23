@@ -22,6 +22,8 @@ def DownloadData():
                   "Wales_ol_2011_gen_clipped.tar.gz",
                   "Scotland_dt_1991.tar.gz",
                   "Scotland_ol_1991.tar.gz",
+                  "Gb_dt_2009_10.tar.gz",
+                  "Gb_wpc_2010_05.tar.gz"
                   ]
 
     for f in files_list:
@@ -29,10 +31,11 @@ def DownloadData():
             url = base_url + f
             print "Downloading {}".format(url)
             wget.download(url, out=tar_dir)
-            print "\nUnpacking.."
-            tar = tarfile.open(os.path.join(tar_dir, f))
-            tar.extractall(path=shape_dir)
-            tar.close()
+
+        print "\nUnpacking.."
+        tar = tarfile.open(os.path.join(tar_dir, f))
+        tar.extractall(path=shape_dir)
+        tar.close()
 
 
 class GBBasemap(object):
@@ -62,9 +65,11 @@ class GBBasemap(object):
         break_idxs = np.concatenate(([0], break_idxs, [len(points)]))
 
         # Remove break_idxs that are next to each other
-        break_idxs = break_idxs[np.roll(break_idxs, -1) - break_idxs != 1]
+        #break_idxs = break_idxs[np.roll(break_idxs, -1) - break_idxs != 1]
         islands = [points[break_idxs[i]+1:break_idxs[i+1]-1]
                    for i in range(len(break_idxs)-1)]
+
+        islands = [i for i in islands if len(i) > 10]
 
         return islands
 
@@ -110,17 +115,21 @@ class GBBasemap(object):
             shape_file = self.get_shape_file_name(c, "counties")
             self.add_shape_collection(shape_file, *args, **kwargs)
 
+    def draw_by_file_name(self, file_name, *args, **kwargs):
+        self.add_shape_collection(file_name, *args, **kwargs)
+
     def get_shape_file_name(self, country, spec):
         key = "_".join([country, spec])
-        if self.clipped:
-            key = key + "_clipped"
+
         dictionary = {
-            'england_outline_clipped': 'England_ol_2011_gen_clipped.shp',
-            'england_counties_clipped': 'england_ct_2011_gen_clipped.shp',
-            'wales_outline_clipped':  'Wales_ol_2011_gen_clipped.shp',
-            'wales_counties_clipped':  'Wales_ct_1991_gen3_area.shp',
-            'scotland_outline_clipped': 'Scotland_ol_1991_area.shp',
-            'scotland_counties_clipped': 'Scotland_dt_1991_area.shp',
+            'england_outline': 'England_ol_2011_gen_clipped.shp',
+            'england_counties': 'england_ct_2011_gen_clipped.shp',
+            'wales_outline':  'Wales_ol_2011_gen_clipped.shp',
+            'wales_counties':  'Wales_ct_1991_gen3_area.shp',
+            'scotland_outline': 'Scotland_ol_1991_area.shp',
+            'scotland_counties': 'Scotland_dt_1991_area.shp',
+            'scotland_counties': 'Scotland_dt_1991_area.shp',
+            'gb_counties': 'gb_dt_2009_10.shp',
             }
 
         try:
