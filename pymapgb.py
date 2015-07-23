@@ -126,8 +126,9 @@ class GBBasemap(object):
         try:
             shape_file = dictionary[key]
         except KeyError:
-            print("Error: Something is wrong with country={}, spec={}".format(
-                country, spec))
+            raise ValueError(
+                "Error: Something is wrong with country={}, spec={}".format(
+                    country, spec))
 
         return shape_file
 
