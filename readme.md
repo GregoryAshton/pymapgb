@@ -27,21 +27,32 @@ basics are as follows:
 
 * First create a map instance:
 
+    ```python
     import matplotlib.pyplot as plt
     from pymapgb import GBBasemap
     GBmap = GBBasemap(clipped=True)
+    ```
 
 * then to add country level data
 
+    ```python
     GBmap.draw_country(["england", "wales"], color="w", linewidth=2, edgecolor="k")
     GBmap.draw_country('scotland', color="w", linewidth=2, edgecolor="k")
+    ```
 
 * and to add county level data:
+
+    ```python
     GBmap.draw_counties_for_country(["scotland", "wales", "england"])
+    ```
 
 * Typically one will want to autoscale the map with
 
+    ```python
     GBmap.ax.autoscale()
+    ```
+
+Here is the full result of the [demo](demo.py):
 
 ![demo.png](demo.png)
 
