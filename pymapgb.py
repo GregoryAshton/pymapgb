@@ -106,11 +106,17 @@ class GBBasemap(object):
             poly = mpl.patches.Polygon(isle, closed=True, *args, **kwargs)
             self.ax.add_patch(poly)
 
-    def draw_by_shape_file_name(self, shape_file_name, *args, **kwargs):
+    def draw_by_shape_file_name(self, shape_file_name, colors=None, *args,
+                                **kwargs):
+        if type(kwargs) is None:
+            kwargs=dict()
 
         metadata, shapes = self.read_shape_file(shape_file_name)
         nshapes = len(shapes)
+
         for i in range(nshapes):
+            if colors == "random":
+                kwargs['facecolor'] = np.random.uniform(0, 1, 3)
             self.plot_single_shape(shapes[i], *args, **kwargs)
 
     def split_up_islands(self, points):
@@ -132,7 +138,7 @@ class GBBasemap(object):
 
         return islands
 
-    def draw_by_request(self, request, region, *args, **kwargs):
+    def draw_by_request(self, request, region, colors=None, *args, **kwargs):
         """ Draw the map according to particular request and region
 
         Paramaters
@@ -141,6 +147,9 @@ class GBBasemap(object):
             One of ['country', 'county', 'constituency']
         region: str,
             One of ['england', 'wales', 'scotland', 'gb']
+        colors: None, 'random'
+            If 'random' then randomly color all the different shapes in the
+            shape file
 
         """
 
@@ -148,4 +157,5 @@ class GBBasemap(object):
         request = request.lower()
 
         shape_file_name = self.get_shape_file_name(request, region)
-        self.draw_by_shape_file_name(shape_file_name, *args, **kwargs)
+        self.draw_by_shape_file_name(shape_file_name, colors=colors,
+                                     *args, **kwargs)
