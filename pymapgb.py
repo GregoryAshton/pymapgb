@@ -54,6 +54,60 @@ class GBBasemap(object):
         else:
             self.threshold = threshold
 
+    # IO Tools to facilitate interaction with shape-files
+    def get_shape_file_name(self, request, region):
+        """ Interface to stores shape-files """
+        key = "_".join([region, request])
+
+        dictionary = {
+            'england_country': 'England_ol_2011_gen_clipped.shp',
+            'england_counties': 'england_ct_2011_gen_clipped.shp',
+            'wales_country':  'Wales_ol_2011_gen_clipped.shp',
+            'wales_counties':  'Wales_ct_1991_gen3_area.shp',
+            'scotland_country': 'Scotland_ol_1991_area.shp',
+            'scotland_counties': 'Scotland_dt_1991_area.shp',
+            'gb_constituency': 'gb_dt_2009_10.shp',
+            }
+
+        try:
+            shape_file = dictionary[key]
+        except KeyError:
+            raise ValueError(
+                ("Error: It appears that we don't have request={} for "
+                 "region={}").format(request, region))
+
+        return shape_file
+
+    def read_shape_file(self, shape_file_name):
+        """ Takes the name of a shape-file and returns shapes and metadata """
+        shape_file_path = os.path.join(self.shape_dir, shape_file_name)
+        try:
+            map_f = sf.Reader(shape_file_path)
+        except sf.ShapefileException:
+            raise ValueError(
+                "The shape-file {} does not appear to exist".format(
+                    shape_file_path) +
+                "\nTry running $ python pymapgb.py to download the files"
+                )
+        metadata = map_f.records()
+        shapes = map_f.shapes()
+
+        return metadata, shapes
+
+    # Plotting tools
+    def plot_single_shape(self, shape, *args, **kwargs):
+        islands = self.split_up_islands(shape.points)
+        for isle in islands:
+            poly = mpl.patches.Polygon(isle, closed=True, *args, **kwargs)
+            self.ax.add_patch(poly)
+
+    def draw_by_shape_file_name(self, shape_file_name, *args, **kwargs):
+
+        metadata, shapes = self.read_shape_file(shape_file_name)
+        nshapes = len(shapes)
+        for i in range(nshapes):
+            self.plot_single_shape(shapes[i], *args, **kwargs)
+
     def split_up_islands(self, points):
         """ Break a list of points up into individual islands """
 
@@ -73,73 +127,23 @@ class GBBasemap(object):
 
         return islands
 
-    def add_shape_collection(self, shape_file_name, color=None, **kwargs):
+    def draw_by_request(self, request, region, *args, **kwargs):
+        """ Draw the map according to particular request and region
 
-        shape_file_path = os.path.join(self.shape_dir, shape_file_name)
-        try:
-            map_f = sf.Reader(shape_file_path)
-        except sf.ShapefileException:
-            raise ValueError(
-                "The shape-file {} does not appear to exist".format(
-                    shape_file_path) +
-                "\nTry running $ python pycountrygb.py to download the files"
-                )
-        metadata = map_f.records()
-        shapes = map_f.shapes()
+        Paramaters
+        ----------
+        request: str,
+            One of ['country', 'county', 'constituency']
+        region: str,
+            One of ['england', 'wales', 'scotland', 'gb']
 
-        if color is None:
-            colors = np.random.uniform(0, 1, (len(shapes), 3))
-        elif type(color) == str:
-            colors = color * len(shapes)
+        """
 
-        for i, s in enumerate(shapes):
-            islands = self.split_up_islands(s.points)
-            for isle in islands:
-                poly = mpl.patches.Polygon(isle, facecolor=colors[i],
-                                           closed=True, **kwargs)
-                self.ax.add_patch(poly)
+        region = region.lower()
+        request = request.lower()
 
-    def draw_country(self, country, *args, **kwargs):
-        if type(country) != list:
-            country = [country]
-
-        for c in country:
-            shape_file = self.get_shape_file_name(c, "outline")
-            self.add_shape_collection(shape_file, *args, **kwargs)
-
-    def draw_counties_for_country(self, country, *args, **kwargs):
-        if type(country) != list:
-            country = [country]
-
-        for c in country:
-            shape_file = self.get_shape_file_name(c, "counties")
-            self.add_shape_collection(shape_file, *args, **kwargs)
-
-    def draw_by_file_name(self, file_name, *args, **kwargs):
-        self.add_shape_collection(file_name, *args, **kwargs)
-
-    def get_shape_file_name(self, country, spec):
-        key = "_".join([country, spec])
-
-        dictionary = {
-            'england_outline': 'England_ol_2011_gen_clipped.shp',
-            'england_counties': 'england_ct_2011_gen_clipped.shp',
-            'wales_outline':  'Wales_ol_2011_gen_clipped.shp',
-            'wales_counties':  'Wales_ct_1991_gen3_area.shp',
-            'scotland_outline': 'Scotland_ol_1991_area.shp',
-            'scotland_counties': 'Scotland_dt_1991_area.shp',
-            'scotland_counties': 'Scotland_dt_1991_area.shp',
-            'gb_counties': 'gb_dt_2009_10.shp',
-            }
-
-        try:
-            shape_file = dictionary[key]
-        except KeyError:
-            raise ValueError(
-                "Error: Something is wrong with country={}, spec={}".format(
-                    country, spec))
-
-        return shape_file
+        shape_file_name = self.get_shape_file_name(request, region)
+        self.draw_by_shape_file_name(shape_file_name, *args, **kwargs)
 
 if __name__ == "__main__":
     DownloadData()
