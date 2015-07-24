@@ -1,4 +1,7 @@
 from setuptools import setup
+import pymapgb
+
+pymapgb.DownloadData()
 
 setup(name='pymapgb',
       packages=[''],

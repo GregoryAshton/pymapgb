@@ -7,9 +7,11 @@ import os
 import tarfile
 
 
+shape_dir = os.path.join(os.environ.get("HOME"), ".shape_files")
+
+
 def DownloadData():
     """ Downloads the shapefiles """
-    shape_dir = "./shape_files"
     tar_dir = "./tars"
     for dir in [shape_dir, tar_dir]:
         if not os.path.exists(dir):
@@ -25,24 +27,27 @@ def DownloadData():
                   "Gb_dt_2009_10.tar.gz",
                   "Gb_wpc_2010_05.tar.gz"
                   ]
-
+    print("Downloading shape files...")
     for f in files_list:
         if not os.path.exists(os.path.join(tar_dir, f)):
             url = base_url + f
-            print "Downloading {}".format(url)
+            print("Downloading {}".format(url))
             wget.download(url, out=tar_dir)
+            print()
 
-        print "\nUnpacking.."
+        print("Unpacking {}".format(f))
         tar = tarfile.open(os.path.join(tar_dir, f))
         tar.extractall(path=shape_dir)
         tar.close()
+
+    print("Done, all shape-files stored in {}".format(shape_dir))
 
 
 class GBBasemap(object):
     def __init__(self, ax=None, threshold=None):
         if ax is None:
             ax = plt.subplot(111, aspect="equal")
-        self.shape_dir = "shape_files"
+        self.shape_dir = shape_dir
         self.ax = ax
         self.clipped = True
 
@@ -144,6 +149,3 @@ class GBBasemap(object):
 
         shape_file_name = self.get_shape_file_name(request, region)
         self.draw_by_shape_file_name(shape_file_name, *args, **kwargs)
-
-if __name__ == "__main__":
-    DownloadData()
