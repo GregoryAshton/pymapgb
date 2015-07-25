@@ -5,6 +5,8 @@ import shapefile as sf
 import wget
 import os
 import tarfile
+import pickle 
+import glob
 
 
 shape_dir = os.path.join(os.environ.get("HOME"), ".shape_files")
@@ -41,6 +43,7 @@ def DownloadData():
         tar.close()
 
     print("Done, all shape-files stored in {}".format(shape_dir))
+
 
 
 class GBBasemap(object):
@@ -99,8 +102,14 @@ class GBBasemap(object):
 
         return metadata, shapes
 
+    def generate_shape_dictionary(self, shape_file_name, d={}):
+        metadata, shapes = self.read_shape_file(shape_file_name)
+        for m, s in zip(metadata, shapes):
+            d[m[1].lower()] = s
+        return d
+
     # Plotting tools
-    def plot_single_shape(self, shape, *args, **kwargs):
+    def draw_single_shape(self, shape, *args, **kwargs):
         islands = self.split_up_islands(shape.points)
         for isle in islands:
             poly = mpl.patches.Polygon(isle, closed=True, *args, **kwargs)
@@ -117,7 +126,7 @@ class GBBasemap(object):
         for i in range(nshapes):
             if colors == "random":
                 kwargs['facecolor'] = np.random.uniform(0, 1, 3)
-            self.plot_single_shape(shapes[i], *args, **kwargs)
+            self.draw_single_shape(shapes[i], *args, **kwargs)
 
     def split_up_islands(self, points):
         """ Break a list of points up into individual islands """
@@ -159,3 +168,26 @@ class GBBasemap(object):
         shape_file_name = self.get_shape_file_name(request, region)
         self.draw_by_shape_file_name(shape_file_name, colors=colors,
                                      *args, **kwargs)
+
+    def draw_from_data(self, datas, colors, requests, regions):
+        if type(regions) != list:
+            regions = [regions]
+        if type(requests) != list:
+            requests = [requests]
+
+        shape_files = []
+        for region in regions:
+            for request in requests:
+                shape_files.append(self.get_shape_file_name(request, region))
+
+        d = {}
+        for shf in shape_files:
+            d = self.generate_shape_dictionary(shf, d)
+
+        print d.keys()
+        for data, c in zip(datas, colors):
+            try:
+                shape = d[data]
+                self.draw_single_shape(shape, facecolor=c)
+            except KeyError:
+                print("No data found for {}".format(data))
