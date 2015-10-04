@@ -61,7 +61,7 @@ a shape-file (in the `~/.shape_files/` directory) and works directly from that.
     <img
     src="https://raw.githubusercontent.com/ga7g08/pymapgb/master/examples/countries.png"
     alt="" height="400" width="350">
-    <figcaption> Countries of Great Britian
+    <figcaption> Countries of Great Britain
     </figure>
     </a>
 <br />
